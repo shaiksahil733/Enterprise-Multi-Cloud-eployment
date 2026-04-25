@@ -9,14 +9,14 @@ variable "ntier_vpc" {
   type = object({
     cidr_block = optional(string, "10.0.0.0/16")
     subnets_public = list(object({
-      cidr_block = string
-      availability_zone         = string
-      Name       = string
+      cidr_block        = string
+      availability_zone = string
+      Name              = string
     }))
     subnets_private = list(object({
-      cidr_block = string
-      availability_zone        = string
-      Name       = string
+      cidr_block        = string
+      availability_zone = string
+      Name              = string
     }))
   })
 }
@@ -24,4 +24,88 @@ variable "ntier_vpc" {
 variable "network_name" {
   type    = string
   default = "ntier"
+}
+
+variable "ntier_alb" {
+  type = object({
+    Name        = string
+    description = string
+    ingress = list(object({
+      from_port   = number
+      to_port     = number
+      description = string
+      ip_protocol = string
+      cidr_ipv4   = string
+    }))
+    egress = object({
+      from_port   = number
+      to_port     = number
+      ip_protocol = string
+      cidr_ipv4   = string
+    })
+  })
+
+}
+
+variable "ntier_bastion" {
+  type = object({
+    Name        = string
+    description = string
+    ingress = list(object({
+      from_port   = number
+      to_port     = number
+      description = string
+      ip_protocol = string
+      cidr_ipv4   = string
+    }))
+    egress = object({
+      from_port   = number
+      to_port     = number
+      ip_protocol = string
+      cidr_ipv4   = string
+    })
+  })
+
+}
+
+variable "ntier_app" {
+  type = object({
+    Name        = string
+    description = string
+    ingress = list(object({
+      from_port   = number
+      to_port     = number
+      description = string
+      ip_protocol = string
+
+    }))
+    egress = object({
+      from_port   = number
+      to_port     = number
+      ip_protocol = string
+      cidr_ipv4   = string
+    })
+  })
+
+}
+
+variable "ntier_db" {
+  type = object({
+    Name        = string
+    description = string
+    ingress = list(object({
+      from_port   = number
+      to_port     = number
+      description = string
+      ip_protocol = string
+
+    }))
+    egress = object({
+      from_port   = number
+      to_port     = number
+      ip_protocol = string
+      cidr_ipv4   = string
+    })
+  })
+
 }

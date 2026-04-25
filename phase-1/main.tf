@@ -41,7 +41,7 @@ resource "aws_subnet" "ntier_public" {
 resource "aws_route_table" "ntier_public_route_table" {
   count  = local.subnets_public != 0 ? 1 : 0
   vpc_id = aws_vpc.ntier.id
-  route  {
+  route {
     cidr_block = local.cidr_block
     gateway_id = aws_internet_gateway.ntier_igw.id
   }
@@ -67,6 +67,11 @@ resource "aws_route_table" "ntier_private_route_table" {
   count  = local.subnets_public != 0 ? 1 : 0
   vpc_id = aws_vpc.ntier.id
 
+  route {
+    cidr_block     = local.cidr_block
+    nat_gateway_id = aws_nat_gateway.ntier_nat.id
+  }
+
 }
 
 resource "aws_route_table_association" "ntier_publ_route_table_association" {
@@ -76,11 +81,11 @@ resource "aws_route_table_association" "ntier_publ_route_table_association" {
 }
 
 resource "aws_eip" "ntier_lb" {
-  instance = aws_instance.web.id
-  domain   = "vpc"
+  domain = "vpc"
 }
 
 resource "aws_nat_gateway" "ntier_nat" {
   allocation_id = aws_eip.ntier_lb.id
-  subnet_id     = aws_subnet.ntier_public.id
+  subnet_id     = aws_subnet.ntier_public[0].id
 }
+
