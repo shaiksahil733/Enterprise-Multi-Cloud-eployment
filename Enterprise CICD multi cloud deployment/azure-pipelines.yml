@@ -1,0 +1,49 @@
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+- group: devops-secrets
+
+steps:
+
+# Download PEM Key
+- task: DownloadSecureFile@1
+  name: pemFile
+  inputs:
+    secureFile: 'id_rsa'
+
+# Docker Login
+- script: |
+    echo $(DOCKER_PASSWORD) | docker login -u $(DOCKER_USERNAME) --password-stdin
+  displayName: Docker Login
+
+# Build Image
+- script: |
+    docker build -t $(DOCKER_USERNAME)/app:latest .
+  displayName: Build Docker Image
+
+# Push Image
+- script: |
+    docker push $(DOCKER_USERNAME)/app:latest
+  displayName: Push Docker Image
+
+# SSH Deploy to EC2
+- script: |
+    chmod 600 $(pemFile.secureFilePath)
+
+    ssh -o StrictHostKeyChecking=no -i $(pemFile.secureFilePath) $(EC2_USER)@$(EC2_HOST) << EOF
+
+    docker pull $(DOCKER_USERNAME)/app:latest
+
+    kind load docker-image $(DOCKER_USERNAME)/app:latest --name sahil-cluster
+
+    kubectl set image deployment/sahil-app sahil-app=$(DOCKER_USERNAME)/app:latest
+
+    kubectl rollout status deployment/sahil-app
+
+    EOF
+  displayName: Deploy to EC2 Kubernetes
