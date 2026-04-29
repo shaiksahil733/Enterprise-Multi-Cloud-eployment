@@ -1,0 +1,20 @@
+docker 
+sudo apt install docker.io -y
+sudo systemctl start docker
+sudo systemctl enable docker
+
+kubernetes{kubectl}
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+install kind
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+
+kubectl port-forward service/sahil-service 8080:5000 --address 0.0.0.0
+kubectl apply -f .
+kubectl get nodes
+ kind load docker-image sahil733/app:1 --name sahil-cluster

@@ -47,3 +47,4 @@ steps:
 
     EOF
   displayName: Deploy to EC2 Kubernetes
+  
