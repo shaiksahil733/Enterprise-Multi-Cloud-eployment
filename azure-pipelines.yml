@@ -1,50 +1,35 @@
-
 trigger:
 - master
 
 pool:
   vmImage: ubuntu-latest
 
-variables:
-- group: devops-secrets
-
 steps:
 
-# Download PEM Key
-- task: DownloadSecureFile@1
-  name: pemFile
+# Build + Push Docker Image
+- task: Docker@2
+  displayName: Build and Push Docker Image
   inputs:
-    secureFile: 'id_rsa'
+    command: buildAndPush
+    containerRegistry: dockerhub-conn
+    repository: sahil733/app
+    Dockerfile: Dockerfile
+    tags: |
+      latest
+      $(Build.BuildId)
 
-# Docker Login
-- script: |
-    echo $(DOCKER_PASSWORD) | docker login -u $(DOCKER_USERNAME) --password-stdin
-  displayName: Docker Login
+- task: SSH@0
+  inputs:
+    sshEndpoint: 'ec2-ssh-conn'
+    runOptions: 'commands'
+    commands: |
+      set -e
 
-# Build Image
-- script: |
-    docker build -t $(DOCKER_USERNAME)/app:latest .
-  displayName: Build Docker Image
+      docker pull sahil733/app:latest
 
-# Push Image
-- script: |
-    docker push $(DOCKER_USERNAME)/app:latest
-  displayName: Push Docker Image
+      kind load docker-image sahil733/app:latest --name sahil-cluster 2>/dev/null
 
-# SSH Deploy to EC2
-- script: |
-    chmod 600 $(pemFile.secureFilePath)
+      kubectl set image deployment/sahil-app sahil-app=sahil733/app:latest
 
-    ssh -o StrictHostKeyChecking=no -i $(pemFile.secureFilePath) $(EC2_USER)@$(EC2_HOST) << EOF
-
-    docker pull $(DOCKER_USERNAME)/app:latest
-
-    kind load docker-image $(DOCKER_USERNAME)/app:latest --name sahil-cluster
-
-    kubectl set image deployment/sahil-app sahil-app=$(DOCKER_USERNAME)/app:latest
-
-    kubectl rollout status deployment/sahil-app
-
-    EOF
-  displayName: Deploy to EC2 Kubernetes
-  
+      kubectl rollout status deployment/sahil-app
+  displayName: Deploy to Kubernetes Cluster
